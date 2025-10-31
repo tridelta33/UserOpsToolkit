@@ -145,7 +145,25 @@ function Get-AzureSessionState {
         return [bool](Get-AzContext -ErrorAction SilentlyContinue)
     }
     elseif (Get-Command -Name 'Get-MgContext' -ErrorAction SilentlyContinue) {
-        return [bool](Get-MgContext -ErrorAction SilentlyContinue)
+        $mgContext = Get-MgContext -ErrorAction SilentlyContinue
+
+        if ($null -eq $mgContext) {
+            return $false
+        }
+
+        if ($mgContext.PSObject.Properties.Name -contains 'IsConnected') {
+            return [bool]$mgContext.IsConnected
+        }
+
+        if ($mgContext.PSObject.Properties.Name -contains 'Account') {
+            return ($null -ne $mgContext.Account)
+        }
+
+        if ($mgContext.PSObject.Properties.Name -contains 'Scopes') {
+            return (($mgContext.Scopes | Where-Object { $_ }) -ne $null)
+        }
+
+        return $false
     }
 
     return $false
